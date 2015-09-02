@@ -1,11 +1,12 @@
 #include <Magick++.h>
 #include <iostream>
 #include <cstdlib>
+#include <cmath>
 
 using namespace Magick;
 using namespace std;
 
-void phaseShift(Blob* source, width, height)
+void phaseShift(Blob* source, int width, int height)
 {
   Image* tempimage = new Image(*source);
   Image* input = new Image(*source);
@@ -72,6 +73,29 @@ void phaseShift(Blob* source, width, height)
   delete input, tempimage;
 }
 
+void RGBshift(Blob* blob, int width, int height, int distance)
+{
+    Image* sourceImage = new Image(*blob);
+    Image* newImage = new Image(*blob);
+
+    for (int i=0;i<height;i++)
+    {
+	for (int j=0;j<width;j++) //iterate through the pixels in the row
+	{
+	    if (j + abs(distance) > 0 && j + abs(distance) < width)
+	    {
+		newImage->pixelColor(j,i,ColorRGB(double(ColorRGB(sourceImage->pixelColor(j+distance,i)).red()),
+						  double(ColorRGB(sourceImage->pixelColor(j,i)).green()),
+						  double(ColorRGB(sourceImage->pixelColor(j-distance,i)).blue())));
+	    }
+	}
+    }
+  newImage->display();
+  
+  newImage->write(blob);
+  delete newImage, sourceImage;
+}
+
 int main (int nargs, char** cargs)
 {  
   if (nargs < 2)
@@ -103,6 +127,8 @@ int main (int nargs, char** cargs)
 
   phaseShift(tempBlob, width, height);
 
+  RGBshift(tempBlob, width, height, 4);
+  
   Image* output = new Image(*tempBlob);
   
   output->write("outputimage.png");

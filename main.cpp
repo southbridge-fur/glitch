@@ -5,39 +5,14 @@
 using namespace Magick;
 using namespace std;
 
-int main (int nargs, char** cargs)
+void phaseShift(Blob* source, width, height)
 {
-  //  for (int i=0; i<nargs; i++) std::cout << i << ": " << cargs[i] << std::endl;
-  
-  if (nargs < 2)
-  {
-      std::cout << "Please provide a path to the image you wish to glitch as an argument." << std::endl;
-      return 0;
-  }
-
-  srand (time(NULL));
-  
-  InitializeMagick((char*)("/lib/"));
-  
-  static Image* input = new Image(cargs[1]);
-
-  //  ColorRGB seed = input->pixelColor(20,20);
-
-  //  std::cout << (seed.red() * 255) << ", " << (seed.green() * 255) << ", " << (seed.blue() * 255) << std::endl;
-
-  static Blob tempBlob;
-
-  input->magick("PNG");
-
+  Image* tempimage = new Image(*source);
+  Image* input = new Image(*source);
+/*
   int width = input->columns();
   int height = input->rows();
-
-  std::cout << "Width: " << width << " Height: " << height << std::endl;
-  
-  input->write(&tempBlob);
-
-  Image tempimage(tempBlob);
-  
+*/
   //input->display();
   int run=0;
   int direction;
@@ -60,7 +35,7 @@ int main (int nargs, char** cargs)
 	      if (j + direction > 0 && j + direction < width)
 	      {
 //		  cout << "Entered the if statement" << endl;
-		  tempimage.pixelColor(j+direction,i,input->pixelColor(j,i));
+		  tempimage->pixelColor(j+direction,i,input->pixelColor(j,i));
 	      }
 	      else if (j < direction) //only works if the direction is positive
 	      {
@@ -72,7 +47,7 @@ int main (int nargs, char** cargs)
 		      fillColor = input->pixelColor((width-direction)+j,i-1); //grabs the pixels for this line from the end of the previous line if the direction is positive
 		  }
 		  
-		  tempimage.pixelColor(j,i,fillColor);
+		  tempimage->pixelColor(j,i,fillColor);
 	      }
 	      else if (j > width+direction) //likewise, only works if the direction is negative
 	      {
@@ -83,7 +58,7 @@ int main (int nargs, char** cargs)
 		  {
 		      fillColor = input->pixelColor(-((width+direction)-j),i+1); //likewise but opposite for negative
 		  }
-		  tempimage.pixelColor(j,i,fillColor);
+		  tempimage->pixelColor(j,i,fillColor);
 	      }
 	  }
 	  run--;
@@ -91,11 +66,48 @@ int main (int nargs, char** cargs)
       
   }
 
-  tempimage.display();
-
-  tempimage.write("outputimage.png");
+  tempimage->display();
   
-  delete input;
+  tempimage->write(source);
+  delete input, tempimage;
+}
+
+int main (int nargs, char** cargs)
+{  
+  if (nargs < 2)
+  {
+      std::cout << "Please provide a path to the image you wish to glitch as an argument." << std::endl;
+      return 0;
+  }
+
+  srand (time(NULL));
+  
+  InitializeMagick((char*)("/lib/"));
+  
+  static Image* input = new Image(cargs[1]);
+
+  //  ColorRGB seed = input->pixelColor(20,20);
+
+  //  std::cout << (seed.red() * 255) << ", " << (seed.green() * 255) << ", " << (seed.blue() * 255) << std::endl;
+
+  static Blob* tempBlob = new Blob();
+
+  input->magick("PNG");
+
+  int width = input->columns();
+  int height = input->rows();
+
+  std::cout << "Width: " << width << " Height: " << height << std::endl;
+
+  input->write(tempBlob);
+
+  phaseShift(tempBlob, width, height);
+
+  Image* output = new Image(*tempBlob);
+  
+  output->write("outputimage.png");
+  
+  delete input, output;
   
   return 0;
 }

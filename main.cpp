@@ -126,12 +126,12 @@ int main (int nargs, char** cargs)
   input->write(tempBlob);
 
   phaseShift(tempBlob, width, height);
-
+  
   RGBshift(tempBlob, width, height, 4);
   
   Image* output = new Image(*tempBlob);
   
-  output->write("outputimage.png");
+  output->write(string(cargs[1]) + ".glitched.png");
   
   delete input, output;
   

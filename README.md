@@ -9,6 +9,5 @@ This has been tested on ImageMagick 6.9.2.0-1.
 
 Plans and ideas:
   - Moar effects!
-      - A RGB shift effect (http://2.bp.blogspot.com/-wyFHqr9UXmc/U4-S5rWu-OI/AAAAAAAAfbg/tdzfXincLEw/s1600/rgbshift.jpg)
-      - Curruption of the image
+      - General curruption of the image, including artifacting.
   - GUI

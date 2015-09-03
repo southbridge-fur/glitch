@@ -8,76 +8,86 @@ using namespace std;
 
 void phaseShift(Blob* source, int width, int height)
 {
-  Image* tempimage = new Image(*source);
-  Image* input = new Image(*source);
-/*
-  int width = input->columns();
-  int height = input->rows();
-*/
-  //input->display();
-  int run=0;
-  int direction;
-  
-  for ( int i=0; i<height; i++)//iteratre through the rows
-  {
-//      cout << i << endl;
-      if (!(rand() % 12) || run)
-      {
-//	  cout << "Entered run" << endl;
-	  if (!run)
-	  {
-	      direction = ((rand() % (width/20))-width/40);
-	      run = ((rand() % height/50) + height/80);
-	  }
-//	  cout << direction << endl;
-	  for (int j=0;j<width;j++) //iterate through the pixels in the row
-	  {
-	      //shift pixels over
-	      if (j + direction > 0 && j + direction < width)
-	      {
-//		  cout << "Entered the if statement" << endl;
-		  tempimage->pixelColor(j+direction,i,input->pixelColor(j,i));
-	      }
-	      else if (j < direction) //only works if the direction is positive
-	      {
-//		  cout << "Entered the first else statement" << endl;
-		  Color fillColor; 
-		  if (!i) fillColor = Color(0,0,0,0); //gotta check we're within the boundries of the image, if we are not we will fill the area with blank tranceparentcy
-		  else
-		  {
-		      fillColor = input->pixelColor((width-direction)+j,i-1); //grabs the pixels for this line from the end of the previous line if the direction is positive
-		  }
-		  
-		  tempimage->pixelColor(j,i,fillColor);
-	      }
-	      else if (j > width+direction) //likewise, only works if the direction is negative
-	      {
-//		  cout << "Entered the second else statement" << endl;
-		  Color fillColor;
-		  if (i == height-1) fillColor = Color(0,0,0,0);
-		  else
-		  {
-		      fillColor = input->pixelColor(-((width+direction)-j),i+1); //likewise but opposite for negative
-		  }
-		  tempimage->pixelColor(j,i,fillColor);
-	      }
-	  }
-	  run--;
-      }
-      
-  }
+    Image* input = new Image();
 
-  tempimage->display();
+    input->size(Geometry(width,height));
+    input->magick("PNG");
+    input->read(*source);
+    
+    Image* tempimage = new Image(*input);
+/*
+    int width = input->columns();
+    int height = input->rows();
+*/
+    //input->display();
+    int run=0;
+    int direction;
   
-  tempimage->write(source);
-  delete input, tempimage;
+    for ( int i=0; i<height; i++)//iteratre through the rows
+    {
+//	cout << i << endl;
+	if (!(rand() % 12) || run)
+	{	  
+//	    cout << "Entered run" << endl;
+	    if (!run)
+	    {
+		direction = ((rand() % (width/20))-width/40);
+		run = ((rand() % height/50) + height/80);
+	    }
+//	    cout << direction << endl;
+	    for (int j=0;j<width;j++) //iterate through the pixels in the row
+	    {
+		//shift pixels over
+		if (j + direction > 0 && j + direction < width)
+		{
+//		    cout << "Entered the if statement" << endl;
+		    tempimage->pixelColor(j+direction,i,input->pixelColor(j,i));
+		}
+		else if (j < direction) //only works if the direction is positive
+		{
+//		    cout << "Entered the first else statement" << endl;
+		    Color fillColor; 
+		    if (!i) fillColor = Color(0,0,0,0); //gotta check we're within the boundries of the image, if we are not we will fill the area with blank tranceparentcy
+		    else
+		    {
+			fillColor = input->pixelColor((width-direction)+j,i-1); //grabs the pixels for this line from the end of the previous line if the direction is positive
+		    }
+		  
+		    tempimage->pixelColor(j,i,fillColor);
+		}
+		else if (j > width+direction) //likewise, only works if the direction is negative
+		{
+//		    cout << "Entered the second else statement" << endl;
+		    Color fillColor;
+		    if (i == height-1) fillColor = Color(0,0,0,0);
+		    else
+		    {
+			fillColor = input->pixelColor(-((width+direction)-j),i+1); //likewise but opposite for negative
+		    }
+		    tempimage->pixelColor(j,i,fillColor);
+		}
+	    }
+	    run--;
+	}
+      
+    }
+  
+//    tempimage->display();
+  
+    tempimage->write(source);
+    delete input, tempimage;
 }
 
 void RGBshift(Blob* blob, int width, int height, int distance)
 {
-    Image* sourceImage = new Image(*blob);
-    Image* newImage = new Image(*blob);
+    Image* sourceImage = new Image();
 
+    sourceImage->size(Geometry(width,height));
+    sourceImage->magick("PNG");
+    sourceImage->read(*blob);
+
+    Image* newImage = new Image(*sourceImage);
+    
     for (int i=0;i<height;i++)
     {
 	for (int j=0;j<width;j++) //iterate through the pixels in the row
@@ -90,50 +100,51 @@ void RGBshift(Blob* blob, int width, int height, int distance)
 	    }
 	}
     }
-  newImage->display();
+//    newImage->display();
   
-  newImage->write(blob);
-  delete newImage, sourceImage;
+    newImage->write(blob);
+    delete newImage, sourceImage;
 }
 
 int main (int nargs, char** cargs)
 {  
-  if (nargs < 2)
-  {
-      std::cout << "Please provide a path to the image you wish to glitch as an argument." << std::endl;
-      return 0;
-  }
+    if (nargs < 2)
+    {
+	std::cout << "Please provide a path to the image you wish to glitch as an argument." << std::endl;
+	return 0;
+    }
 
-  srand (time(NULL));
+//  for (int i=0;i<nargs; i++) cout << i << " " << cargs[i] << endl;
+    srand (time(NULL));
   
-  InitializeMagick((char*)("/lib/"));
+    InitializeMagick((char*)("/lib/"));
   
-  static Image* input = new Image(cargs[1]);
+    static Image* input = new Image(cargs[1]);
 
-  //  ColorRGB seed = input->pixelColor(20,20);
+    //  ColorRGB seed = input->pixelColor(20,20);
 
-  //  std::cout << (seed.red() * 255) << ", " << (seed.green() * 255) << ", " << (seed.blue() * 255) << std::endl;
+    //  std::cout << (seed.red() * 255) << ", " << (seed.green() * 255) << ", " << (seed.blue() * 255) << std::endl;
 
-  static Blob* tempBlob = new Blob();
+    static Blob* tempBlob = new Blob();
 
-  input->magick("PNG");
+    input->magick("PNG");
 
-  int width = input->columns();
-  int height = input->rows();
+    int width = input->columns();
+    int height = input->rows();
 
-  std::cout << "Width: " << width << " Height: " << height << std::endl;
+    std::cout << "Width: " << width << " Height: " << height << std::endl;
 
-  input->write(tempBlob);
+    input->write(tempBlob);
 
-  phaseShift(tempBlob, width, height);
+    phaseShift(tempBlob, width, height);
   
-  RGBshift(tempBlob, width, height, 4);
+    RGBshift(tempBlob, width, height, 4);
   
-  Image* output = new Image(*tempBlob);
+    Image* output = new Image(*tempBlob);
   
-  output->write(string(cargs[1]) + ".glitched.png");
+    output->write(string(cargs[1]) + ".glitched.png");
   
-  delete input, output;
+    delete input, output;
   
-  return 0;
+    return 0;
 }

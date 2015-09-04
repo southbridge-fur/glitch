@@ -4,6 +4,7 @@ Requires ImageMagick (http://www.imagemagick.org)
 
 Example of the effects this program generates (original image credit: https://forums.robertsspaceindustries.com/discussion/127972/nehkara-s-wallpapers)
 ![Image](../master/images/testimage.png)
+![Image](../master/images/outputimage.png)
 
 I'm running on an arch machine, I just had to install ImageMagick through pacman. 
 Your milage may varry based upon your OS and such.

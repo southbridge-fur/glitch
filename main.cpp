@@ -1,9 +1,9 @@
 #include <iostream>
-#include "unistd.h"
-#include "glitch.h"
+#include "unistd.h" //otparg
+#include "glitch.h" 
 #include "gui.h"
 
-#define VERSION "glitch-0.0.1"
+#define VERSION "glitch-0.1.2, created by Daniel Tyler, danieltyler42@yahoo.com"
 
 using namespace Magick;
 using namespace std;
@@ -12,8 +12,8 @@ int main (int argv, char** argc)
 {  
     if (argv < 2)
     {
-	GUIManager* gui = new GUIManager();
-//	std::cout << "Please provide a path to the image you wish to glitch as an argument." << std::endl;
+	//GUIManager* gui = new GUIManager();
+	std::cout << "Please provide a path to the image you wish to glitch as an argument." << std::endl;
 	return 0;
     }    
 
@@ -22,6 +22,9 @@ int main (int argv, char** argc)
     char* filename;
     opterr = 0;
 
+    //TODO add -q for quiet thereby making -v exclusive for debugging
+    //add -o for output filename;
+    
     while ((c = getopt (argv, argc, "+rscVvh")) != -1)
     {
 	switch (c)

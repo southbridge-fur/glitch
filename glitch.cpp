@@ -37,7 +37,7 @@ Glitch::~Glitch()
 {
     Image* output = new Image(*imageBlob);
 
-    output->display();
+    if (verbose) output->display();
 
     output->write(string(filename) + ".glitched.png");
 

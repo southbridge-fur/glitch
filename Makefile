@@ -8,7 +8,7 @@ GTK = `pkg-config --cflags gtk+-3.0`
 MAGICK = `Magick++-config --cppflags --cxxflags --ldflags --libs`
 
 all: 	clean $(FILES)
-	$(CC) $(GTK) $(INCLUDES) main.cpp $(FILES) -o glitch.exe  $(MAGICK) $(GTKLINK)
+	$(CC) $(GTK) $(INCLUDES) main.cpp $(FILES) -o glitch $(MAGICK) $(GTKLINK)
 
 clean:
 	rm -f *.o; rm -f glitch.exe;

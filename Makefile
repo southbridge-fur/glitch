@@ -11,7 +11,7 @@ all: 	clean $(FILES)
 	$(CC) $(GTK) $(INCLUDES) main.cpp $(FILES) -o glitch $(MAGICK) $(GTKLINK)
 
 clean:
-	rm -f *.o; rm -f glitch.exe;
+	rm -f *.o; rm -f glitch;
 
 glitch.o: 	glitch.h glitch.cpp
 		$(CC) glitch.h glitch.cpp $(MAGICK) -c

@@ -1,150 +1,70 @@
-#include <Magick++.h>
 #include <iostream>
-#include <cstdlib>
-#include <cmath>
+#include "unistd.h"
+#include "glitch.h"
+#include "gui.h"
+
+#define VERSION "glitch-0.0.1"
 
 using namespace Magick;
 using namespace std;
 
-void phaseShift(Blob* source, int width, int height)
-{
-    Image* input = new Image();
-
-    input->size(Geometry(width,height));
-    input->magick("PNG");
-    input->read(*source);
-    
-    Image* tempimage = new Image(*input);
-/*
-    int width = input->columns();
-    int height = input->rows();
-*/
-    //input->display();
-    int run=0;
-    int direction;
-  
-    for ( int i=0; i<height; i++)//iteratre through the rows
-    {
-//	cout << i << endl;
-	if (!(rand() % 12) || run)
-	{	  
-//	    cout << "Entered run" << endl;
-	    if (!run)
-	    {
-		direction = ((rand() % (width/20))-width/40);
-		run = ((rand() % height/50) + height/80);
-	    }
-//	    cout << direction << endl;
-	    for (int j=0;j<width;j++) //iterate through the pixels in the row
-	    {
-		//shift pixels over
-		if (j + direction > 0 && j + direction < width)
-		{
-//		    cout << "Entered the if statement" << endl;
-		    tempimage->pixelColor(j+direction,i,input->pixelColor(j,i));
-		}
-		else if (j < direction) //only works if the direction is positive
-		{
-//		    cout << "Entered the first else statement" << endl;
-		    Color fillColor; 
-		    if (!i) fillColor = Color(0,0,0,0); //gotta check we're within the boundries of the image, if we are not we will fill the area with blank tranceparentcy
-		    else
-		    {
-			fillColor = input->pixelColor((width-direction)+j,i-1); //grabs the pixels for this line from the end of the previous line if the direction is positive
-		    }
-		  
-		    tempimage->pixelColor(j,i,fillColor);
-		}
-		else if (j > width+direction) //likewise, only works if the direction is negative
-		{
-//		    cout << "Entered the second else statement" << endl;
-		    Color fillColor;
-		    if (i == height-1) fillColor = Color(0,0,0,0);
-		    else
-		    {
-			fillColor = input->pixelColor(-((width+direction)-j),i+1); //likewise but opposite for negative
-		    }
-		    tempimage->pixelColor(j,i,fillColor);
-		}
-	    }
-	    run--;
-	}
-      
-    }
-  
-//    tempimage->display();
-  
-    tempimage->write(source);
-    delete input, tempimage;
-}
-
-void RGBshift(Blob* blob, int width, int height, int distance)
-{
-    Image* sourceImage = new Image();
-
-    sourceImage->size(Geometry(width,height));
-    sourceImage->magick("PNG");
-    sourceImage->read(*blob);
-
-    Image* newImage = new Image(*sourceImage);
-    
-    for (int i=0;i<height;i++)
-    {
-	for (int j=0;j<width;j++) //iterate through the pixels in the row
-	{
-	    if (j + abs(distance) > 0 && j + abs(distance) < width)
-	    {
-		newImage->pixelColor(j,i,ColorRGB(double(ColorRGB(sourceImage->pixelColor(j+distance,i)).red()),
-						  double(ColorRGB(sourceImage->pixelColor(j,i)).green()),
-						  double(ColorRGB(sourceImage->pixelColor(j-distance,i)).blue())));
-	    }
-	}
-    }
-//    newImage->display();
-  
-    newImage->write(blob);
-    delete newImage, sourceImage;
-}
-
-int main (int nargs, char** cargs)
+int main (int argv, char** argc)
 {  
-    if (nargs < 2)
+    if (argv < 2)
     {
-	std::cout << "Please provide a path to the image you wish to glitch as an argument." << std::endl;
+	GUIManager* gui = new GUIManager();
+//	std::cout << "Please provide a path to the image you wish to glitch as an argument." << std::endl;
 	return 0;
+    }    
+
+    bool verbose=0,rgb = 0,phaseShift =0, corrupt=0; //flags
+    int c;
+    char* filename;
+    opterr = 0;
+
+    while ((c = getopt (argv, argc, "+rscVvh")) != -1)
+    {
+	switch (c)
+	{
+	case 'r': 
+	    rgb=1;
+	    break;
+	case 's':
+	    phaseShift=1;
+	    break;
+	case 'c':
+	    corrupt=1;
+	    break;
+	case 'V':
+	    cout << VERSION << endl;
+	    break;
+	case 'v':
+	    verbose=1;
+	    break;
+	case '?' :
+	case 'h':
+	default:
+	    cout << VERSION << endl;
+	    cout << "Usage: glitch [arguments] <filename>\n"
+		 << "Arguments:"
+		 << "\n\t-r\n\t\tCreates an RGB shift on the image."
+		 << "\n\t-s\n\t\tRandomly shifts rows of pixels of the image to simulate a clean glitching effect."
+		 << "\n\t-c\n\t\tLiterally corrupts the pixel data of the image by cutting and pasting the bits around."
+		 << "\n\t-v\n\t\tVerbose\n\t-V\n\t\tDisplays the version."
+		 << "\n\n\tRight now the effects are applied in the order (assuming each one is enabled): corrupt (option -c) -> row shift (option -s) -> RGB shift (option -r). More functionality will be implemented in the future."
+		 << endl;
+	    break;
+	}
     }
+    filename = argc[optind]; 
 
-//  for (int i=0;i<nargs; i++) cout << i << " " << cargs[i] << endl;
-    srand (time(NULL));
-  
-    InitializeMagick((char*)("/lib/"));
-  
-    static Image* input = new Image(cargs[1]);
+    if (verbose) cout << "Filename: " << string(filename) << endl;
 
-    //  ColorRGB seed = input->pixelColor(20,20);
-
-    //  std::cout << (seed.red() * 255) << ", " << (seed.green() * 255) << ", " << (seed.blue() * 255) << std::endl;
-
-    static Blob* tempBlob = new Blob();
-
-    input->magick("PNG");
-
-    int width = input->columns();
-    int height = input->rows();
-
-    std::cout << "Width: " << width << " Height: " << height << std::endl;
-
-    input->write(tempBlob);
-
-    phaseShift(tempBlob, width, height);
-  
-    RGBshift(tempBlob, width, height, 4);
-  
-    Image* output = new Image(*tempBlob);
-  
-    output->write(string(cargs[1]) + ".glitched.png");
-  
-    delete input, output;
-  
+    Glitch* image = new Glitch(filename,verbose);
+    
+    if (corrupt) image->corrupt();
+    if (phaseShift) image->phaseShift();
+    if (rgb) image->RGBshift(4);  //Defaulting to 4 for now, this will be able to be set as an option later.
+    delete image; //causes the image to be writen to the disk and everything else to be cleaned up.
     return 0;
 }

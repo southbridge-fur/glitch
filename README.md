@@ -2,7 +2,21 @@
 A simple program to apply common glitch effects to an image.
 Currently only supports command-line arguments, there is a GUI in the works but it is far from finished.
 Up to three effects can be performed on an image at the moment. 
-A clean glitch effect:
+A clean glitch effect: 
+![Image](http://i.imgur.com/6RJ2WGh.png)
+
+A RGB shift: 
+![Image](http://i.imgur.com/cvkGMrD.png)
+
+And a general corruption of the image data:
+![image](http://i.imgur.com/e6LYyOv.png)
+
+Of course these effects can be combined for interesting results:
+RGB shift with the clean glitch effect:
+![Image](http://i.imgur.com/dtmWgjh.png)
+
+or even all three effects applied together:
+
 
 Requires ImageMagick (http://www.imagemagick.org)
 
@@ -10,7 +24,7 @@ Example of the effects this program generates, more examples can be found here: 
 Before:
 ![Image](../master/images/testimage.png)
 After:
-![Image](../master/images/outputimage.png)
+
 
 I'm running on an Arch Linux machine, I just had to install ImageMagick through pacman. 
 Your milage may varry based upon your OS and such.

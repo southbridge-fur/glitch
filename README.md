@@ -5,7 +5,7 @@ Requires ImageMagick (http://www.imagemagick.org) and GTK+ (http://www.gtk.org/)
 
 Currently only supports command-line arguments, there is a GUI in the works but it is far from finished.
 
-Up to three effects can be performed on an image at the moment. 
+Up to three effects can be performed on an image at the moment. See glitch -h for more information.
 
 A clean glitch effect: 
 ![Image](http://i.imgur.com/6RJ2WGh.png)

@@ -5,7 +5,7 @@
 #include <iostream>
 #include <bitset>
 #include <cstdlib>
-#include <cmath>
+#include <math.h>
 
 using namespace std;
 using namespace Magick;
@@ -26,8 +26,8 @@ public:
     virtual ~Glitch();
 
     void phaseShift();
-    void RGBshift(int);
-    void corrupt();
+    void RGBshift(int, double);
+    void corrupt(int);
 };
 
 #endif

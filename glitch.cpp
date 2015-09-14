@@ -37,7 +37,7 @@ Glitch::~Glitch()
 {
     Image* output = new Image(*imageBlob);
 
-    if (verbose) output->display();
+//    if (verbose) output->display();
 
     output->write(string(filename) + ".glitched.png");
 
@@ -46,7 +46,7 @@ Glitch::~Glitch()
 
 void Glitch::phaseShift()
 {
-    if (verbose) cout << "Applying row shift...";
+    if (verbose) cout << "Applying row shift..." << endl;
     
     Image* input = new Image();
 
@@ -119,9 +119,9 @@ void Glitch::phaseShift()
     delete input, tempimage;
 }
 
-void Glitch::RGBshift(int distance)
+void Glitch::RGBshift(int distance, double rot)
 {
-    if (verbose) cout << "Applying RGB shift...";
+    if (verbose) cout << "Applying RGB shift..." << endl;
     Image* sourceImage = new Image();
 
     sourceImage->size(Geometry(width,height));
@@ -129,17 +129,45 @@ void Glitch::RGBshift(int distance)
     sourceImage->read(*imageBlob);
 
     Image* newImage = new Image(*sourceImage);
+
+    double PI = 3.1415926535897;
+    
+    //rot is the degree rotation which the colors will be shifted by.
+    int x = distance*cos(-(rot*PI)/180);
+    int y = distance*sin((rot*PI)/180);
+
+    if (verbose) cout << "x shift is: " << x << "\ny shift is: " << y << endl;
     
     for (int i=0;i<height;i++)
     {
 	for (int j=0;j<width;j++) //iterate through the pixels in the row
 	{
-	    if (j + abs(distance) > 0 && j + abs(distance) < width)
+	    if (j+x < 0 || j+x > width)
 	    {
-		newImage->pixelColor(j,i,ColorRGB(double(ColorRGB(sourceImage->pixelColor(j+distance,i)).red()),
-						  double(ColorRGB(sourceImage->pixelColor(j,i)).green()),
-						  double(ColorRGB(sourceImage->pixelColor(j-distance,i)).blue())));
+		if (i+y < 0 || i+y > height)
+		    newImage->pixelColor(j,i,ColorRGB(double(ColorRGB(sourceImage->pixelColor(j,i)).red()),
+						      double(ColorRGB(sourceImage->pixelColor(j,i)).green()),
+						      double(ColorRGB(sourceImage->pixelColor(j-x,i-y)).blue())));
+		else if (i-y < 0 || i-y > height)
+		    newImage->pixelColor(j,i,ColorRGB(double(ColorRGB(sourceImage->pixelColor(j,i+y)).red()),
+						      double(ColorRGB(sourceImage->pixelColor(j,i)).green()),
+						      double(ColorRGB(sourceImage->pixelColor(j-x,i)).blue())));
 	    }
+	    else if(j-x < 0 || j-x > width)
+	    {
+		if (i+y < 0 || i+y > height)
+		    newImage->pixelColor(j,i,ColorRGB(double(ColorRGB(sourceImage->pixelColor(j+x,i)).red()),
+						      double(ColorRGB(sourceImage->pixelColor(j,i)).green()),
+						      double(ColorRGB(sourceImage->pixelColor(j,i-y)).blue())));
+		else if (i-y < 0 || i-y > height)
+		    newImage->pixelColor(j,i,ColorRGB(double(ColorRGB(sourceImage->pixelColor(j+x,i+y)).red()),
+						      double(ColorRGB(sourceImage->pixelColor(j,i)).green()),
+						      double(ColorRGB(sourceImage->pixelColor(j,i)).blue())));
+	    }
+	    else
+		newImage->pixelColor(j,i,ColorRGB(double(ColorRGB(sourceImage->pixelColor(j+x,i+y)).red()),
+						  double(ColorRGB(sourceImage->pixelColor(j,i)).green()),
+						  double(ColorRGB(sourceImage->pixelColor(j-x,i-y)).blue())));
 	}
     }
 //    newImage->display();
@@ -149,9 +177,9 @@ void Glitch::RGBshift(int distance)
     delete newImage, sourceImage;
 }
 
-void Glitch::corrupt()
+void Glitch::corrupt(int type)
 {
-    if (verbose) cout << "Corrupting image...";
+    if (verbose) cout << "Corrupting image..." << endl;
     Image* input = new Image();
 
     input->size(Geometry(width,height));
@@ -180,55 +208,70 @@ void Glitch::corrupt()
     }
     
     //something happens to the bits
-
-    //move some bits around randomly
-    for (int a=0;a<3;a++)
+    unsigned int totalSize = ((width*height)*24); //storing this value to keep from re-calculating it all the time.
+    //Copy and paste bits
+    if (type == 0)
     {
-
-	unsigned int totalSize = ((width*height)*24); //storing this value to keep from re-calculating it all the time.
-	bool* oldbits = bits; //Create a new name for the array
-	bits = new bool[totalSize]; //create a new array with the old name
+	for (int a=0;a<3;a++)
+	{
+	    bool* oldbits = bits; //Create a new name for the array
+	    bits = new bool[totalSize]; //create a new array with the old name
 	
-	unsigned int begin = rand()%totalSize; //this will also be the starting point for the copy
-	unsigned int size = rand()%(totalSize-begin);
-	unsigned int pastepos = rand()%(totalSize - size);//The position to paste the bits.
+	    unsigned int begin = rand()%totalSize; //this will also be the starting point for the copy
+	    unsigned int size = rand()%(totalSize-begin);
+	    unsigned int pastepos = rand()%(totalSize - size);//The position to paste the bits.
 
 /*
-	if (pastepos >= begin) pastepos += size; 
-	cout << totalSize << ", " << begin << ", " << size << ", " << pastepos << endl;
-	cout << "Begin + size: " << begin+size << endl;
-	cout << "Pastepos + size: " << pastepos+size << endl;
-	cout << "Begin > Pastepos: " << (bool)(begin > pastepos) << endl;
+  if (pastepos >= begin) pastepos += size; 
+  cout << totalSize << ", " << begin << ", " << size << ", " << pastepos << endl;
+  cout << "Begin + size: " << begin+size << endl;
+  cout << "Pastepos + size: " << pastepos+size << endl;
+  cout << "Begin > Pastepos: " << (bool)(begin > pastepos) << endl;
 */
 	
-	for (int i=0; i<totalSize; i++)
-	{
-	    if (i >= pastepos && i <= pastepos+size)
+	    for (int i=0; i<totalSize; i++)
 	    {
-		bits[i] = oldbits[(i-pastepos)+begin]; //Copy everything into the paste position.
+		if (i >= pastepos && i <= pastepos+size)
+		{
+		    bits[i] = oldbits[(i-pastepos)+begin]; //Copy everything into the paste position.
+		}
+		else if (i >= begin+size)
+		{
+		    bits[i] = oldbits[i]; //Copy everything after what was cut.
+		}
+		else if (i > pastepos+size)
+		{
+		    bits[i] = oldbits[i-size]; //Copy everything which would have been shifted after the paste.
+		}
+		else
+		{
+		    bits[i] = oldbits[i]; //copy everything up to the paste position
+		}
 	    }
-	    else if (i >= begin+size)
-	    {
-		bits[i] = oldbits[i]; //Copy everything after what was cut.
-	    }
-	    else if (i > pastepos+size)
-	    {
-		bits[i] = oldbits[i-size]; //Copy everything which would have been shifted after the paste.
-	    }
-	    else
-	    {
-		bits[i] = oldbits[i]; //copy everything up to the paste position
-	    }
+	    delete oldbits; //delete the old array since bits is now our updated set.
 	}
-	delete oldbits; //delete the old array since bits is now our updated set.
     }
+    else if (type == 1 || type == 4) //randomly flip bits, or just flip all of the bits
+    {
+	for (int i=0; i<totalSize; i++) if (!(rand()%(int(width/2))) || type ==4) bits[i] = !bits[i];
+    }
+    else if (type == 2) //shift toward most significant bit
+    {
+	for (int i=0; i<totalSize-1; i++) bits[i] = bits[i+1];
+    }
+    else if (type == 3)
+    {
+	for (int i=0; i<totalSize-1; i++) bits[totalSize-i] = bits[totalSize-i-1];
+    }	
+    else if (type == 5) //flip the order of the bits
+    {
+	bool* oldbits = bits; //Create a new name for the array
+	bits = new bool[totalSize]; //create a new array with the old name
 
-    //flip the bits
-    //for (int i=0;i<width*height*24; i++) bits[i] = !bits[i];
-
-    //shifts the bits by 1
-    //for (int i=0;i+1<width*height*24;i++) bits[i] = bits[i+1];
-    
+	for (int i=0; i<totalSize; i++) bits[totalSize-1-i]=oldbits[i];
+		    
+	delete oldbits;
+    }
     
     //write back to the image
     Image* output = new Image();

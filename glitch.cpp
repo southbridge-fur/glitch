@@ -1,4 +1,7 @@
 #include "glitch.h"
+#include <Magick++.h>
+
+using namespace Magick;
 
 Glitch::Glitch(char* name, bool v)
 {

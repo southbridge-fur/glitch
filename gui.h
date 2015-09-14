@@ -1,10 +1,13 @@
 #if !defined GUI_H
 #define GUI_H
 
-#include <gtk/gtk.h>
 #include <iostream>
 
 using namespace std;
+
+typedef struct _GtkApplication GtkApplication;
+typedef struct _GtkWidget GtkWidget;
+typedef void* gpointer;
 
 class GUIManager
 {

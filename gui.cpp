@@ -1,5 +1,7 @@
 #include "gui.h"
 
+#include <gtk/gtk.h>
+
 GUIManager::GUIManager()
 {
     GtkApplication *app;

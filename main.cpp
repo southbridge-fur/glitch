@@ -8,9 +8,9 @@
 using namespace Magick;
 using namespace std;
 
-int main (int argv, char** argc)
+int main (int argc, char** argv)
 {  
-    if (argv < 2)
+    if (argc < 2)
     {
 	//GUIManager* gui = new GUIManager();
 	std::cout << "Please provide a path to the image you wish to glitch as an argument." << std::endl;
@@ -30,29 +30,35 @@ int main (int argv, char** argc)
     
     int c;
     char* filename;
+    char* output;
     opterr = 0;
 
     //TODO add -q for quiet thereby making -v exclusive for debugging
     //add -o for output filename;
+
+    filename = argv[argc-1]; 
     
-    while ((c = getopt (argv, argc, "r:R:sc:Vvh")) != -1)
+    while ((c = getopt (argc, argv, "r:R:sc:o:Vvh")) != -1)
     {
 	switch (c)
 	{
 	case 'r':
 	    rgb=1;
-	    rgbdistance = atoi(optarg);
+	    if (atoi(optarg) > 0) rgbdistance = atoi(optarg);
 	    break;
 	case 'R':
 	    rgb=1;
-	    rgbrot = atoi(optarg);
+	    if (atoi(optarg) > 0) rgbrot = atoi(optarg);
 	    break;
 	case 's':
 	    phaseShift=1;
 	    break;
 	case 'c':
 	    corrupt=1;
-	    ctype = atoi(optarg);
+	    if (atoi(optarg) > 0) ctype = atoi(optarg);
+	    break;
+	case 'o':
+	    output = optarg;
 	    break;
 	case 'V':
 	    cout << VERSION << endl;
@@ -66,6 +72,9 @@ int main (int argv, char** argc)
 	    cout << VERSION << endl;
 	    cout << "Usage: glitch [arguments] <filename>\n"
 		 << "Arguments:"
+		 << "\n\t-o <filename>"
+		 << "\n\t\tSets the output filename. Default is output.png. All images"
+		 << "\n\t\tare currently saved in png format."
 		 << "\n\t-r [distance]"
 		 << "\n\t\tCreates an RGB shift on the image. The optional argument is"
                  << "\n\t\tthe amount of pixels the rgb values will be shifted. Particulary,"
@@ -78,13 +87,14 @@ int main (int argv, char** argc)
 		 << "\n\t-c [corruption type]"
 		 << "\n\t\tLiterally corrupts the bits of the image using one of the following"
 		 << "\n\t\tmethods, default is 0:"
-		 << "\n\n\t\t 0, Copies and pastes the bits of the image around a bit."
-		 << "\n\n\t\t 1, Iterates through the image flipping random bits. Flip chance"
+		 << "\n\n\t\t0, Copies and pastes the bits of the image around a bit."
+		 << "\n\n\t\t1, Iterates through the image flipping random bits. Flip chance"
 		 << "\n\t\t\tis 1:(half the width of the image)"
-		 << "\n\n\t\t 2, Shifts every bit by one toward the most significant bit, appending a 0."
-		 << "\n\n\t\t 3, Shifts every bit by one toward the least signigicant bit, appending a 0."
-		 << "\n\n\t\t 4, Flips every bit."
-		 << "\n\n\t\t 5, Flips the order of the bits."
+		 << "\n\n\t\t2, Shifts every bit by one toward the most significant bit, appending a 0."
+		 << "\n\n\t\t3, Shifts every bit by one toward the least signigicant bit, appending a 0."
+		 << "\n\n\t\t4, Flips every bit."
+		 << "\n\n\t\t5, Flips the order of the bits."
+		 << "\n\n\t\t6, Randomly shifts sections of the bits."
 		 << "\n\t-v\n\t\tVerbose\n\t-V\n\t\tDisplays the version."
 		 << "\n\n\tRight now the effects are applied in the order (assuming each"
 		 << "\n\tone is enabled): corrupt (option -c) -> row shift (option -s) -> RGB shift (option -r)."
@@ -94,8 +104,6 @@ int main (int argv, char** argc)
 	    break;
 	}
     }
-    
-    filename = argc[argv-1]; 
 
     if (verbose) cout << "Filename: " << string(filename) << endl;
 
@@ -104,6 +112,9 @@ int main (int argv, char** argc)
     if (corrupt) image->corrupt(ctype);
     if (phaseShift) image->phaseShift();
     if (rgb) image->RGBshift(rgbdistance, rgbrot);
+
+    image->save(output);
+    
     delete image; //causes the image to be writen to the disk and everything else to be cleaned up.
     return 0;
 }

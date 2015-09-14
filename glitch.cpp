@@ -26,21 +26,23 @@ Glitch::Glitch(char* name, bool v)
 
     input->write(imageBlob);
 
-    delete input;
-//    phaseShift(tempBlob, width, height);
-  
-//    RGBshift(tempBlob, width, height, 4);
-    
+    delete input; //deletes the image now that the data is stored in a blob
 }
 
 Glitch::~Glitch()
 {
+    delete imageBlob; //
+}
+
+void Glitch::save(char* name = (char*)("output.png"))
+{
     Image* output = new Image(*imageBlob);
 
 //    if (verbose) output->display();
+    if (verbose) cout << "Saving file " << name << endl;
 
-    output->write(string(filename) + ".glitched.png");
-
+    output->write(name);
+    
     delete output;
 }
 
@@ -270,6 +272,22 @@ void Glitch::corrupt(int type)
 
 	for (int i=0; i<totalSize; i++) bits[totalSize-1-i]=oldbits[i];
 		    
+	delete oldbits;
+    }
+    else if (type == 6)//randomly shifts bits around as it goes through.
+    {
+	bool* oldbits = bits; //Create a new name for the array
+	bits = new bool[totalSize]; //create a new array with the old name
+     
+	int shift = 0;
+
+	for (int i=0; i<totalSize-1; i++) //shifts sections of the bits around
+	{
+	    if (!(rand()%(width*100))) shift += (rand()%3)-1;
+	    if (i+shift >= totalSize) bits[i] = 0;
+	    else bits[i] = oldbits[i+shift];
+	}
+
 	delete oldbits;
     }
     

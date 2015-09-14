@@ -28,6 +28,7 @@ public:
     void phaseShift();
     void RGBshift(int, double);
     void corrupt(int);
+    void save(char*);
 };
 
 #endif

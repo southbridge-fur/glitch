@@ -1,8 +1,12 @@
 # glitch
 A simple program to apply common glitch effects to an image.
+
 Requires ImageMagick (http://www.imagemagick.org) and GTK+ (http://www.gtk.org/)
+
 Currently only supports command-line arguments, there is a GUI in the works but it is far from finished.
+
 Up to three effects can be performed on an image at the moment. 
+
 A clean glitch effect: 
 ![Image](http://i.imgur.com/6RJ2WGh.png)
 
@@ -13,6 +17,7 @@ And a general corruption of the image data:
 ![image](http://i.imgur.com/e6LYyOv.png)
 
 Of course these effects can be combined for interesting results.
+
 RGB shift with the clean glitch effect:
 ![Image](http://i.imgur.com/dtmWgjh.png)
 

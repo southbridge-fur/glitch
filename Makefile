@@ -7,8 +7,8 @@ GTKLINK = `pkg-config --libs gtk+-3.0`
 GTK = `pkg-config --cflags gtk+-3.0`
 MAGICK = `Magick++-config --cppflags --cxxflags --ldflags --libs`
 
-all: 	clean $(FILES)
-	$(CC) $(GTK) $(INCLUDES) main.cpp $(FILES) -o glitch $(MAGICK) $(GTKLINK)
+all: 	clean glitch.o
+	$(CC) $(INCLUDES) glitch.o main.cpp -o glitch $(MAGICK)
 
 clean:
 	rm -f *.o; rm -f glitch;
@@ -16,5 +16,6 @@ clean:
 glitch.o: 	glitch.h glitch.cpp
 		$(CC) glitch.h glitch.cpp $(MAGICK) -c
 
-gui.o: 		gui.h gui.cpp
+gui.o: 		gui.h gui.cpp glitch.o
 		$(CC) $(GTK) gui.h gui.cpp $(GTKLINK) -c
+	        $(CC) $(GTK) $(INCLUDES) main.cpp $(FILES) -o glitch $(MAGICK) $(GTKLINK)	

@@ -18,8 +18,6 @@ Glitch::Glitch(char* name, bool v)
 
     //  std::cout << (seed.red() * 255) << ", " << (seed.green() * 255) << ", " << (seed.blue() * 255) << std::endl;
 
-    imageBlob = new Blob();
-
     input->magick("PNG");
 
     width = input->columns();
@@ -27,6 +25,7 @@ Glitch::Glitch(char* name, bool v)
 
     if (verbose) std::cout << "Width: " << width << " Height: " << height << std::endl;
 
+    imageBlob = new Blob();
     input->write(imageBlob);
 
     delete input; //deletes the image now that the data is stored in a blob
@@ -34,7 +33,7 @@ Glitch::Glitch(char* name, bool v)
 
 Glitch::~Glitch()
 {
-    delete imageBlob; //
+    delete imageBlob;
 }
 
 void Glitch::save(char* name = (char*)("output.png"))
@@ -60,37 +59,28 @@ void Glitch::phaseShift()
     input->read(*imageBlob);
     
     Image* tempimage = new Image(*input);
-/*
-    int width = input->columns();
-    int height = input->rows();
-*/
-    //input->display();
+
     int run=0;
     int direction;
   
     for ( int i=0; i<height; i++)//iteratre through the rows
     {
-//	cout << i << endl;
 	if (!(rand() % 12) || run)
 	{	  
-//	    cout << "Entered run" << endl;
 	    if (!run)
 	    {
 		direction = ((rand() % (width/20))-width/40);
 		run = ((rand() % height/50) + height/80);
 	    }
-//	    cout << direction << endl;
 	    for (int j=0;j<width;j++) //iterate through the pixels in the row
 	    {
 		//shift pixels over
 		if (j + direction > 0 && j + direction < width)
 		{
-//		    cout << "Entered the if statement" << endl;
 		    tempimage->pixelColor(j+direction,i,input->pixelColor(j,i));
 		}
 		else if (j < direction) //only works if the direction is positive
 		{
-//		    cout << "Entered the first else statement" << endl;
 		    Color fillColor; 
 		    if (!i) fillColor = Color(0,0,0,0); //gotta check we're within the boundries of the image, if we are not we will fill the area with blank tranceparentcy
 		    else
@@ -102,7 +92,6 @@ void Glitch::phaseShift()
 		}
 		else if (j > width+direction) //likewise, only works if the direction is negative
 		{
-//		    cout << "Entered the second else statement" << endl;
 		    Color fillColor;
 		    if (i == height-1) fillColor = Color(0,0,0,0);
 		    else
@@ -117,10 +106,10 @@ void Glitch::phaseShift()
       
     }
   
-//    tempimage->display();
-    
     tempimage->write(imageBlob);
+
     if (verbose) cout << " done" << endl;
+
     delete input, tempimage;
 }
 
@@ -147,38 +136,25 @@ void Glitch::RGBshift(int distance, double rot)
     {
 	for (int j=0;j<width;j++) //iterate through the pixels in the row
 	{
-	    if (j+x < 0 || j+x > width)
-	    {
-		if (i+y < 0 || i+y > height)
-		    newImage->pixelColor(j,i,ColorRGB(double(ColorRGB(sourceImage->pixelColor(j,i)).red()),
-						      double(ColorRGB(sourceImage->pixelColor(j,i)).green()),
-						      double(ColorRGB(sourceImage->pixelColor(j-x,i-y)).blue())));
-		else if (i-y < 0 || i-y > height)
-		    newImage->pixelColor(j,i,ColorRGB(double(ColorRGB(sourceImage->pixelColor(j,i+y)).red()),
-						      double(ColorRGB(sourceImage->pixelColor(j,i)).green()),
-						      double(ColorRGB(sourceImage->pixelColor(j-x,i)).blue())));
-	    }
-	    else if(j-x < 0 || j-x > width)
-	    {
-		if (i+y < 0 || i+y > height)
-		    newImage->pixelColor(j,i,ColorRGB(double(ColorRGB(sourceImage->pixelColor(j+x,i)).red()),
-						      double(ColorRGB(sourceImage->pixelColor(j,i)).green()),
-						      double(ColorRGB(sourceImage->pixelColor(j,i-y)).blue())));
-		else if (i-y < 0 || i-y > height)
-		    newImage->pixelColor(j,i,ColorRGB(double(ColorRGB(sourceImage->pixelColor(j+x,i+y)).red()),
-						      double(ColorRGB(sourceImage->pixelColor(j,i)).green()),
-						      double(ColorRGB(sourceImage->pixelColor(j,i)).blue())));
-	    }
-	    else
-		newImage->pixelColor(j,i,ColorRGB(double(ColorRGB(sourceImage->pixelColor(j+x,i+y)).red()),
-						  double(ColorRGB(sourceImage->pixelColor(j,i)).green()),
-						  double(ColorRGB(sourceImage->pixelColor(j-x,i-y)).blue())));
+	    bool* edge = new bool[4];
+
+	    edge[0] = !(j+x < 0 || j+x > width);
+	    edge[1] = !(j-x < 0 || j-x > width);
+	    edge[2] = !(i+y < 0 || i+y > height);
+	    edge[3] = !(i-y < 0 || i-y > height);
+	    
+	    newImage->pixelColor(j,i,ColorRGB(double(ColorRGB(sourceImage->pixelColor(j+(x*edge[0]),i+(y*edge[2]))).red()),
+					      double(ColorRGB(sourceImage->pixelColor(j,i)).green()),
+					      double(ColorRGB(sourceImage->pixelColor(j-(x*edge[1]),i-(y*edge[3]))).blue())));
+	
+	    delete edge;
 	}
     }
-//    newImage->display();
-  
+    
     newImage->write(imageBlob);
+
     if (verbose) cout << " done" << endl;
+
     delete newImage, sourceImage;
 }
 
@@ -215,8 +191,9 @@ void Glitch::corrupt(int type)
     //something happens to the bits
     unsigned int totalSize = ((width*height)*24); //storing this value to keep from re-calculating it all the time.
     //Copy and paste bits
-    if (type == 0)
+    switch (type)
     {
+    case 0:
 	for (int a=0;a<3;a++)
 	{
 	    bool* oldbits = bits; //Create a new name for the array
@@ -225,14 +202,6 @@ void Glitch::corrupt(int type)
 	    unsigned int begin = rand()%totalSize; //this will also be the starting point for the copy
 	    unsigned int size = rand()%(totalSize-begin);
 	    unsigned int pastepos = rand()%(totalSize - size);//The position to paste the bits.
-
-/*
-  if (pastepos >= begin) pastepos += size; 
-  cout << totalSize << ", " << begin << ", " << size << ", " << pastepos << endl;
-  cout << "Begin + size: " << begin+size << endl;
-  cout << "Pastepos + size: " << pastepos+size << endl;
-  cout << "Begin > Pastepos: " << (bool)(begin > pastepos) << endl;
-*/
 	
 	    for (int i=0; i<totalSize; i++)
 	    {
@@ -255,20 +224,22 @@ void Glitch::corrupt(int type)
 	    }
 	    delete oldbits; //delete the old array since bits is now our updated set.
 	}
-    }
-    else if (type == 1 || type == 4) //randomly flip bits, or just flip all of the bits
-    {
-	for (int i=0; i<totalSize; i++) if (!(rand()%(int(width/2))) || type ==4) bits[i] = !bits[i];
-    }
-    else if (type == 2) //shift toward most significant bit
-    {
+ 
+	break;
+	
+    case 1: case 4: //randomly flip bits, or just flip all of the bits
+    for (int i=0; i<totalSize; i++) if (type==4 || !(rand()%(int(width/2)))) bits[i] = !bits[i];
+    break;
+    
+    case 2: //shift toward most significant bit..
 	for (int i=0; i<totalSize-1; i++) bits[i] = bits[i+1];
-    }
-    else if (type == 3)
-    {
+	break;
+	
+    case 3: //shift toward least significant bit.
 	for (int i=0; i<totalSize-1; i++) bits[totalSize-i] = bits[totalSize-i-1];
-    }	
-    else if (type == 5) //flip the order of the bits
+	break;
+	
+    case 5: //flip the order of the bits
     {
 	bool* oldbits = bits; //Create a new name for the array
 	bits = new bool[totalSize]; //create a new array with the old name
@@ -276,8 +247,9 @@ void Glitch::corrupt(int type)
 	for (int i=0; i<totalSize; i++) bits[totalSize-1-i]=oldbits[i];
 		    
 	delete oldbits;
+	break;
     }
-    else if (type == 6)//randomly shifts bits around as it goes through.
+    case 6: //randomly shifts bits around as it goes through.
     {
 	bool* oldbits = bits; //Create a new name for the array
 	bits = new bool[totalSize]; //create a new array with the old name
@@ -286,12 +258,14 @@ void Glitch::corrupt(int type)
 
 	for (int i=0; i<totalSize-1; i++) //shifts sections of the bits around
 	{
-	    if (!(rand()%(width*100))) shift += (rand()%3)-1;
+	    if (!(rand()%(width*1000))) shift += (rand()%3)-1;
 	    if (i+shift >= totalSize) bits[i] = 0;
 	    else bits[i] = oldbits[i+shift];
 	}
 
 	delete oldbits;
+	break;
+    }
     }
     
     //write back to the image
@@ -315,7 +289,10 @@ void Glitch::corrupt(int type)
 	    output->pixelColor(j,i,pixel);//Set the pixel
 	}
     }    
+
     output->write(imageBlob);
+
     if (verbose) cout << " done" << endl;
+
     delete output, input, bits;
 }

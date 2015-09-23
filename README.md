@@ -26,7 +26,7 @@ or even all three effects applied together:
 
 more examples can be found here: http://www.imgur.com/a/W0oaw (original image credit: https://forums.robertsspaceindustries.com/discussion/127972/nehkara-s-wallpapers)
 
-I'm running on an Arch Linux machine, I just had to install ImageMagick and GTK3 through pacman. 
+I'm running on an Arch Linux machine, I just had to install ImageMagick through pacman. 
 Your milage may varry based upon your OS and such.
 I have gotten this to fully build and run on my own Raspberry PI, which is running Arch as well.
 

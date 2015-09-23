@@ -122,13 +122,14 @@ void Glitch::RGBshift(int distance, double rot)
     sourceImage->magick("PNG");
     sourceImage->read(*imageBlob);
 
-    Image* newImage = new Image(*sourceImage);
-
+    Image* newImage = new Image(Geometry(width,height),Color(0,0,0,0));
+    newImage->magick("PNG");
+    
     double PI = 3.1415926535897;
     
     //rot is the degree rotation which the colors will be shifted by.
-    int x = distance*cos(-(rot*PI)/180);
-    int y = distance*sin((rot*PI)/180);
+    int x = distance*cos((rot*PI)/180);
+    int y = distance*sin(-(rot*PI)/180);
 
     if (verbose) cout << "x shift is: " << x << "\ny shift is: " << y << endl;
     
@@ -136,24 +137,33 @@ void Glitch::RGBshift(int distance, double rot)
     {
 	for (int j=0;j<width;j++) //iterate through the pixels in the row
 	{
+	    if (rot >= 360 || rot <= -360)
+	    {
+	       	x = distance*((width /2)-j)/256;
+		y = distance*((height/2)-i)/256;
+	    }
+	    
 	    bool* edge = new bool[4];
 
 	    edge[0] = !(j+x < 0 || j+x > width);
 	    edge[1] = !(j-x < 0 || j-x > width);
 	    edge[2] = !(i+y < 0 || i+y > height);
 	    edge[3] = !(i-y < 0 || i-y > height);
-	    
-	    newImage->pixelColor(j,i,ColorRGB(double(ColorRGB(sourceImage->pixelColor(j+(x*edge[0]),i+(y*edge[2]))).red()),
-					      double(ColorRGB(sourceImage->pixelColor(j,i)).green()),
-					      double(ColorRGB(sourceImage->pixelColor(j-(x*edge[1]),i-(y*edge[3]))).blue())));
-	
+
+	    bool alpha = (sourceImage->pixelColor(j+(x*edge[0]),i+(y*edge[2])).redQuantum() != sourceImage->pixelColor(j,i).redQuantum()) || (sourceImage->pixelColor(j-(x*edge[1]),i-(y*edge[3])).blueQuantum() != sourceImage->pixelColor(j,i).blueQuantum()); //If there has been change in this pixel due to the rgb shift
+	    newImage->pixelColor(j,i,Color(sourceImage->pixelColor(j+(x*edge[0]),i+(y*edge[2])).redQuantum(),
+					   sourceImage->pixelColor(j,i).greenQuantum(),
+					   sourceImage->pixelColor(j-(x*edge[1]),i-(y*edge[3])).blueQuantum(),
+					   (alpha) ? 0 : sourceImage->pixelColor(j,i).alphaQuantum()));
+//	    cout << sourceImage->pixelColor(j,i).alphaQuantum() << endl;
+
 	    delete edge;
 	}
     }
     
     newImage->write(imageBlob);
 
-    if (verbose) cout << " done" << endl;
+    if (verbose) cout << "done" << endl;
 
     delete newImage, sourceImage;
 }
@@ -167,29 +177,36 @@ void Glitch::corrupt(int type)
     input->magick("PNG");
     input->read(*imageBlob);
     
-    if (verbose) cout << ((width*height)*3)/(1024) << "kb are required for this image" << endl;
-    bool* bits = new bool[((width*height)*24)]; // 3*8, 8 bits per color, 3 colors per pixel, width*height number of pixels
-
+    if (verbose) cout << ((width*height)*4)/(1024) << "kb are required for this image" << endl;
+    bool* bits = new bool[((width*height)*32)]; // 4*8, 8 bits per color, 3 colors per pixel and one byte for the alpha, width*height number of pixels
+    
+    float conversionAmount = ((pow(2,8))/(pow(2,/*Quantum depth*/16))); //maximum of 8 bits divided by the maximum of 32 bits, to be used during the bit conversion  
+    
     //read into indevidual bits
     for (int i=0;i<height;i++)
     {
 	for (int j=0;j<width;j++)
 	{
-	    ColorRGB pixel = input->pixelColor(j,i);//Grab the pixel
-	    unsigned char bytes[3] = {(unsigned char)(255*pixel.red()),(unsigned char)(255*pixel.green()),(unsigned char)(255*pixel.blue())}; //convert the double pixel format of 0-1 to unsigned char 0-255 in order to save space.
-	    for (int h=0;h<3;h++)
+	    Color pixel = input->pixelColor(j,i);//Grab the pixel
+	    
+//	    cout << pixel.redQuantum() << endl;
+	    unsigned char bytes[4] = {(unsigned char)(conversionAmount*pixel.redQuantum()),    //These color values are actually being down graded from 
+				      (unsigned char)(conversionAmount*pixel.greenQuantum()),  //(assuming the default Quantum Depth of 8 has been used) 32 bits to 8. 
+				      (unsigned char)(conversionAmount*pixel.blueQuantum()),   //We cannot simply type cast the Quantums to an unsighed char since 
+				      (unsigned char)(conversionAmount*pixel.alphaQuantum())};//they are far larger than 8 bits so we have to scale the number.
+	    for (int h=0;h<4;h++)
 	    {
 		bitset<8> byte(bytes[h]);
 		for (int k=0;k<8;k++)
 		{
-		    bits[(i*(width*24))+(j*24)+(h*8)+k] = byte[k];//inserts all the bits into the bits array.
+		    bits[(i*(width*32))+(j*32)+(h*8)+k] = byte[k];//inserts all the bits into the bits array.
 		}
 	    }
 	}
     }
     
     //something happens to the bits
-    unsigned int totalSize = ((width*height)*24); //storing this value to keep from re-calculating it all the time.
+    unsigned int totalSize = ((width*height)*32); //storing this value to keep from re-calculating it all the time.
     //Copy and paste bits
     switch (type)
     {
@@ -249,7 +266,8 @@ void Glitch::corrupt(int type)
 	delete oldbits;
 	break;
     }
-    case 6: //randomly shifts bits around as it goes through.
+    case 6: //shifts the bits a set amount about the image
+    case 7: //randomly shifts bits around as it goes through.
     {
 	bool* oldbits = bits; //Create a new name for the array
 	bits = new bool[totalSize]; //create a new array with the old name
@@ -258,7 +276,9 @@ void Glitch::corrupt(int type)
 
 	for (int i=0; i<totalSize-1; i++) //shifts sections of the bits around
 	{
-	    if (!(rand()%(width*1000))) shift += (rand()%3)-1;
+	    if (type == 8) shift = 1+(i/(width*height*2));
+	    else if (!(rand()%(width*1000))) shift += 1+((rand()%2)*-2);
+
 	    if (i+shift >= totalSize) bits[i] = 0;
 	    else bits[i] = oldbits[i+shift];
 	}
@@ -269,23 +289,24 @@ void Glitch::corrupt(int type)
     }
     
     //write back to the image
-    Image* output = new Image();
-    output->size(Geometry(width,height));
+    Image* output = new Image(Geometry(width,height),Color(0,0,0,0));
     output->magick("PNG");
-
+    
+    
     for (int i=0;i<height;i++)
     {
 	for (int j=0;j<width;j++)
 	{
-	    unsigned long bytes[3];
-	    for (int h=0;h<3;h++)
+	    unsigned long bytes[4];
+	    for (int h=0;h<4;h++)
 	    {
 		bitset<8> byte;
-		for (int k=0;k<8;k++) byte.set(k,(bits[(i*(width*24))+(j*24)+(h*8)+k])); //inserts the bits into a single byte
+		for (int k=0;k<8;k++) byte.set(k,(bits[(i*(width*32))+(j*32)+(h*8)+k])); //inserts the bits into a single byte
 		
-		bytes[h] = byte.to_ulong();
+		bytes[h] = byte.to_ulong()/conversionAmount;
 	    }
-	    ColorRGB pixel((double)bytes[0]/(double)255,(double)bytes[1]/(double)255,(double)bytes[2]/(double)255);
+	    Color pixel(bytes[0],bytes[1],bytes[2],bytes[3]);
+//	    cout << bytes[0] << " " << bytes[1] << " " << bytes[2] << " " << bytes[3] << endl;
 	    output->pixelColor(j,i,pixel);//Set the pixel
 	}
     }    

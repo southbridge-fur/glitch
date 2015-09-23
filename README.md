@@ -39,7 +39,8 @@ Plans and ideas:
       - More general curruption of the image.
       - Artifacting.
       - More data bending.
-  - Finish the GUI
+  - Finish the GUI.
+  - A GIMP plugin.
 
 Known bugs:
   - I once got a weird seg-fault when I had made an image with a black background in GIMP and ran it through this. Only happened with that one image and I have yet to reproduce the issue in any other way. 

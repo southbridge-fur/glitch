@@ -249,11 +249,11 @@ void Glitch::corrupt(int type)
     break;
     
     case 2: //shift toward most significant bit..
-	for (int i=0; i<totalSize-1; i++) bits[i] = bits[i+1];
+	for (int i=0; i<totalSize; i++) bits[i] = bits[i+1];
 	break;
 	
     case 3: //shift toward least significant bit.
-	for (int i=0; i<totalSize-1; i++) bits[totalSize-i] = bits[totalSize-i-1];
+	for (int i=0; i<totalSize; i++) bits[totalSize-i] = bits[totalSize-i-1];
 	break;
 	
     case 5: //flip the order of the bits
@@ -274,7 +274,7 @@ void Glitch::corrupt(int type)
      
 	int shift = 0;
 
-	for (int i=0; i<totalSize-1; i++) //shifts sections of the bits around
+	for (int i=0; i<totalSize; i++) //shifts sections of the bits around
 	{
 	    if (type == 8) shift = 1+(i/(width*height*2));
 	    else if (!(rand()%(width*1000))) shift += 1+((rand()%2)*-2);
@@ -286,8 +286,27 @@ void Glitch::corrupt(int type)
 	delete oldbits;
 	break;
     }
+    case 8: //databending attempt converts all the bits to be read as 4 bit numbers instead of 8
+    {
+	width = (width*1.5);
+	height = (height*1.5);
+	totalSize *= 2;
+	
+	bool* oldbits = bits;
+	bits = new bool[totalSize];
+
+	int counter = 0;
+ 
+	if (verbose) cout << "New size: " << totalSize/1024 << "kb required now.\nNew width: " << width << " new height: " << height << endl;
+	
+	for (int i=0; i<totalSize; i++)
+	{   
+	    ((i%8 > 3)) ? bits[i] = oldbits[counter++] : bits[i] = 0;
+	}
+	delete oldbits;
+	break;
     }
-    
+    }
     //write back to the image
     Image* output = new Image(Geometry(width,height),Color(0,0,0,0));
     output->magick("PNG");
@@ -313,7 +332,7 @@ void Glitch::corrupt(int type)
 
     output->write(imageBlob);
 
-    if (verbose) cout << " done" << endl;
+    if (verbose) cout << "Done." << endl;
 
     delete output, input, bits;
 }

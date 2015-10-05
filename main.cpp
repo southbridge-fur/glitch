@@ -1,24 +1,30 @@
-#include <iostream>
+
+#include <iostream> 
 #include "unistd.h" //otparg
 #include "glitch.h" 
 #include "gui.h"
 
-#define VERSION "glitch-0.2.4, created by Daniel Tyler, danieltyler42@yahoo.com"
+#define VERSION "glitch-0.2.7, created by Daniel Tyler, danieltyler42@yahoo.com"
 
 using namespace Magick;
 using namespace std;
 
 int main (int argc, char** argv)
-{  
+{
+    /*
     if (argc < 2)
     {
 	//GUIManager* gui = new GUIManager();
 	std::cout << "Please provide a path to the image you wish to glitch as an argument." << std::endl;
 	return 0;
     }    
-
+    */
     bool verbose=0,phaseShift =0; //flags
 
+    char* spliceFilename;
+    bool splice;
+    int spliceType;
+    
     //rgb values
     bool rgb = 0;
     int rgbrot = 0;
@@ -32,15 +38,14 @@ int main (int argc, char** argv)
     char* filename;
     char* output;
     opterr = 0;
-
+    
     output = (char*)("output.png");
     
     //TODO add -q for quiet thereby making -v exclusive for debugging
-    //add -o for output filename;
 
     filename = argv[argc-1]; 
     
-    while ((c = getopt (argc, argv, "r:R:sc:o:Vvh")) != -1)
+    while ((c = getopt (argc, argv, "r:R:sc:o:p:P:Vvh")) != -1)
     {
 	switch (c)
 	{
@@ -62,6 +67,14 @@ int main (int argc, char** argv)
 	case 'o':
 	    output = optarg;
 	    break;
+	case 'p' :
+	    splice = 1;
+	    spliceFilename = optarg;
+	    break;
+	case 'P' :
+	    splice = 1;
+	    if (atoi(optarg) > 0) spliceType = atoi(optarg);
+	    break;
 	case 'V':
 	    cout << VERSION << endl;
 	    break;
@@ -82,7 +95,7 @@ int main (int argc, char** argv)
                  << "\n\t\tthe amount of pixels the rgb values will be shifted. Particulary,"
 		 << "\n\t\tif you do not set -R, the red contents will be shifted to the left"
 		 << "\n\t\twhile the blue contents will be shifted to the right. Default is 4."
-		 << "\n\t\tnegative values are allowed, they simply reverse the direction of"
+		 << "\n\t\tNegative values are allowed, they simply reverse the direction of"
 		 << "\n\t\tthe shift."
 		 << "\n\n\t-R <rotation in degrees>"
 		 << "\n\t\tCan be used in conjuction with -r. Defines the angle which the"
@@ -91,7 +104,28 @@ int main (int argc, char** argv)
 		 << "\n\t\teffect is applied to the image. Shifting the rgb outward from"
 		 << "\n\t\tthe center. In this case -r acts as more of a multiplier of the"
 		 << "\n\t\tshift, not a definitive pixel amount."
-		 << "\n\n\t-s\n\t\tRandomly shifts rows of pixels of the image to simulate a clean glitching effect."
+		 << "\n\n\t-p <filename>"
+		 << "\n\t\tSplices together the provided image with the original image."
+		 << "\n\t\t-P can be used to specify the splicing technique."
+		 << "\n\n\t-P <type>"
+		 << "\n\t\tTo be used in conjuction with -p command, specifies the splice"
+		 << "\n\t\ttechnique to be used, these operations are performed upon the"
+		 << "\n\t\tindevidual bits of each image. (default is 0):"
+		 << "\n\n\t\t0, AND             ┐"
+		 << "\n\t\t1, OR              |-Centered, not bit-aligned."
+		 << "\n\t\t2, XOR             |"
+		 << "\n\t\t3, NOT XOR/Equals  ┘"
+		 << "\n\n\t\t4, AND             ┐"
+		 << "\n\t\t5, OR              |-Centered, pixel-bit aligned."
+		 << "\n\t\t6, XOR             |"
+		 << "\n\t\t7, NOT XOR/Equals  ┘"
+		 << "\n\n\t\t8, AND             ┐"
+		 << "\n\t\t9, OR              |-Bits of the smaller image are spread evenly"
+		 << "\n\t\t10, XOR            | throughout the larger image."
+		 << "\n\t\t11, NOT XOR/Equals ┘"
+		 << "\n\n\t-s"
+		 << "\n\t\tRandomly shifts rows of pixels of the image to simulate a"
+                 << "\n\t\tclean glitching effect."
 		 << "\n\n\t-c [corruption type]"
 		 << "\n\t\tLiterally corrupts the bits of the image using one of the following"
 		 << "\n\t\tmethods, default is 0:"
@@ -104,15 +138,18 @@ int main (int argc, char** argv)
 		 << "\n\n\t\t5, Flips the order of the bits."
 		 << "\n\n\t\t6, Randomly shifts sections of the bits."
 		 << "\n\n\t\t7, Like 6 but shifts the bits by 1/12th instead of randomly."
+		 << "\n\n\t\t8, Converts every byte into a nibble (8 bits to 4 bits, shifting every"
+		 << "\n\t\t4 bits over 4 more bits) also doubles the size of the image."
 		 << "\n\n\t-v\n\t\tVerbose\n\n\t-V\n\t\tDisplays the version."
-		 << "\nMore functionality will be implemented in the future."
+		 << "\n\nMore functionality will be implemented in the future."
 		 << "\n\nNotes:"
 		 << "\n\nAlpha channels are preserved, they are also generated, so if there is an"
 		 << "\nimage which has no alpha channel then one will be added. All effects respect"
 		 << "\nalpha channels and will transform them like all other channels. There is no way"
 		 << "\nto change this yet and I plan to add it in the future."
-		 << "\n\nRight now the effects are applied in the order (assuming each"
-		 << "\none is enabled): corrupt (option -c) -> row shift (option -s) -> RGB shift (option -r)."
+		 << "\n\nRight now the effects are applied in the order (assuming each one is enabled):"
+		 << "\ncorrupt (option -c) -> splice (option -p) -> row shift (option -s) ->"
+		 << "\nRGB shift (option -r)."
 		 << endl;
 	    return 0;
 	    break;
@@ -122,13 +159,18 @@ int main (int argc, char** argv)
     if (verbose) cout << "Filename: " << string(filename) << endl;
 
     Glitch* image = new Glitch(filename,verbose);
-    
+
     if (corrupt) image->corrupt(ctype);
+    if (splice) image->splice(spliceType, spliceFilename);
     if (phaseShift) image->phaseShift();
     if (rgb) image->RGBshift(rgbdistance, rgbrot);
-
-    image->save(output);
+/*
+    cout << "corrupt: " << corrupt << " ctype: " << ctype
+	 << "\nphaseShift: " << phaseShift
+	 << "\nrgb: " << rgb << " distance: " << rgbdistance << " rot: " << rgbrot << endl;
+*/
+    image->save(output);//causes the image to be writen to the disk 
     
-    delete image; //causes the image to be writen to the disk and everything else to be cleaned up.
+    delete image; //Cleans up.
     return 0;
 }

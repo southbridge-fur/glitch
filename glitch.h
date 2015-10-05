@@ -10,7 +10,7 @@ using namespace std;
 
 namespace Magick
 {
-    class Blob;
+    class Image;
 };
 
 class Glitch
@@ -18,10 +18,12 @@ class Glitch
 private:
 
     bool verbose;
-    int width; //image width
-    int height; //image height
-    Magick::Blob* imageBlob; //image blob which holds the image data for the class
-    char* filename;
+    Magick::Image* mainImage;
+
+    bool* imageToBits(Magick::Image*);
+    Magick::Image* bitsToImage(bool*,int,int);
+    
+    Magick::Image* load(char*);
     
 public:
     
@@ -30,6 +32,7 @@ public:
 
     void phaseShift();
     void RGBshift(int, double);
+    void splice(int,char*);
     void corrupt(int);
     void save(char*);
 };

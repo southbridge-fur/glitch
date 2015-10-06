@@ -22,8 +22,8 @@ int main (int argc, char** argv)
     bool verbose=0,phaseShift =0; //flags
 
     char* spliceFilename;
-    bool splice;
-    int spliceType;
+    bool splice = 0;
+    int spliceType = 0;
     
     //rgb values
     bool rgb = 0;
@@ -44,6 +44,8 @@ int main (int argc, char** argv)
     //TODO add -q for quiet thereby making -v exclusive for debugging
 
     filename = argv[argc-1]; 
+
+    spliceFilename = filename;
     
     while ((c = getopt (argc, argv, "r:R:sc:o:p:P:Vvh")) != -1)
     {

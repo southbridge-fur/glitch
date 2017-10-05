@@ -1,47 +1,55 @@
-#glitch
-A simple program to apply common glitch effects to an image.
+# Glitch
 
-Requires ImageMagick (http://www.imagemagick.org)
+## Description	
+A simple program to apply common datamosh effects to images. This repo includes both the command line utility and a (horrible) GUI.
 
-Currently only supports command-line arguments, there is a GUI in the works but it is far from finished.
+## Requirements
+	* ImageMagick (http://www.imagemagick.org) version >= 6.9.2.0-1.
 
-Up to three brands of effects can be performed on an image at the moment. See glitch -h for more information.
+## Capabilities
 
+The current supported functions are as follows
+
+	* Shifting random rows of pixels (uses data from the previous row to fill-in missing data on the end)
+	* RGB shift/Chromatic aberration, shift can be directed and scalled as desired.
+	* Dual image XOR/AND/OR/NOTXOR combinations.
+	* Also includes general data mosh/corruption effects founded on manipulating the byte/bit data of the pixels of the image.
+
+## Examples
+		
 A row shift effect: 
 ![Image](http://i.imgur.com/6RJ2WGh.png)
 
-A RGB shift: 
+	
+A RGB shift (Chromatic aberration): 
 ![Image](http://i.imgur.com/cvkGMrD.png)
 
-And a general corruption of the image data:
-![image](http://i.imgur.com/e6LYyOv.png)
-
+	
 Of course these effects can be combined for interesting results.
 
-RGB shift with the clean glitch effect:
+	
+RGB shift with the row shift effect:
 ![Image](http://i.imgur.com/dtmWgjh.png)
 
+	
 or even all three effects applied together:
 ![Image](http://i.imgur.com/CP7f79D.png)
 
-more examples can be found here: http://www.imgur.com/a/W0oaw (original image credit: https://forums.robertsspaceindustries.com/discussion/127972/nehkara-s-wallpapers)
+	
+More examples can be found here: http://www.imgur.com/a/W0oaw (original image credit: https://forums.robertsspaceindustries.com/discussion/127972/nehkara-s-wallpapers)
 
-I'm running on an Arch Linux machine, I just had to install ImageMagick through pacman. 
-Your milage may varry based upon your OS and such.
-I have gotten this to fully build and run on my own Raspberry PI, which is running Arch as well.
+		
+## Plans and ideas:
+	* [ ] Optimizations, this project what created very early into my college career and so there is plenty of room for improvement.
+	* [ ] Unit tests.
+	* [ ] .gif support.
+	* [ ] The ability to set a number of iterations and have each one either exported to a folder or a .gif.
+	* [ ] More effects!
+		* [ ] More general curruption of the image.
+		* [ ] JPEG artifacting.
+	* [ ] Finish the GUI.
+	* [ ] A GIMP plugin.
 
-My version of ImageMagick is ImageMagick 6.9.2.0-1.
-
-Plans and ideas:
-  - General .gif support.
-  - The ability to set a number of iterations and have each one either exported to a folder or a .gif.
-  - More effects!
-      - More general curruption of the image.
-      - Artifacting.
-      - More data bending.
-  - Finish the GUI.
-  - A GIMP plugin.
-
-Known bugs:
-  - I once got a weird seg-fault when I had made an image with a black background in GIMP and ran it through this. Only happened with that one image and I have yet to reproduce the issue in any other way. 
-  - .gif files behave weirdly as it is supported purely by the ImageMagick magick() function. It currently doesn't peform very well and acts somewhat unpredicably. 
+## Known Issues:
+	- I once got a weird seg-fault when I had made an image with a black background in GIMP and ran it through this. Only happened with that one image and I have yet to reproduce the issue in any other way. 
+	- .gif files behave weirdly as it is supported purely by the ImageMagick magick() function. It currently doesn't peform very well and acts somewhat unpredictably. 

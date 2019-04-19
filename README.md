@@ -4,7 +4,7 @@
 A simple program to apply common datamosh effects to images. This repo includes both the command line utility and a (horrible) GUI.
 
 ## Requirements
-* ImageMagick (http://www.imagemagick.org) version >= 6.9.2.0-1.
+* ImageMagick (http://www.imagemagick.org) version >= 7.0
 
 ## Capabilities
 
@@ -48,10 +48,6 @@ Original image credit: https://forums.robertsspaceindustries.com/discussion/1279
 * [ ] The ability to set a number of iterations and have each one either exported to a folder or a .gif.
 * [ ] More effects!
 	* [ ] More general curruption of the image.
-	* [ ] JPEG artifacting.
+	* [ ] JPEG artifacting. Need to review the JPEG standard and possibly create a custom format manipulator.
 * [ ] Finish the GUI.
 * [ ] A GIMP plugin.
-
-## Known Issues:
-- I once got a weird seg-fault when I had made an image with a black background in GIMP and ran it through this. Only happened with that one image and I have yet to reproduce the issue in any other way. 
-- .gif files behave weirdly as it is supported purely by the ImageMagick magick() function. It currently doesn't peform very well and acts somewhat unpredictably. 

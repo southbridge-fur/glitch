@@ -124,17 +124,19 @@ void Glitch::RGBshift(int distance, double rot)
 	    
 	    bool* edge = new bool[4];
 
+	    //if we're outside of the bounds of the image, set this value to 0
 	    edge[0] = !(j+x < 0 || j+x > mainImage->columns());
 	    edge[1] = !(j-x < 0 || j-x > mainImage->columns());
 	    edge[2] = !(i+y < 0 || i+y > mainImage->rows());
 	    edge[3] = !(i-y < 0 || i-y > mainImage->rows());
 
-	    bool alpha = (mainImage->pixelColor(j+(x*edge[0]),i+(y*edge[2])).redQuantum() != mainImage->pixelColor(j,i).redQuantum()) || (mainImage->pixelColor(j-(x*edge[1]),i-(y*edge[3])).blueQuantum() != mainImage->pixelColor(j,i).blueQuantum()); //If there has been change in this pixel due to the rgb shift
-	    newImage->pixelColor(j,i,Color(mainImage->pixelColor(j+(x*edge[0]),i+(y*edge[2])).redQuantum(),
-					   mainImage->pixelColor(j,i).greenQuantum(),
-					   mainImage->pixelColor(j-(x*edge[1]),i-(y*edge[3])).blueQuantum(),
-					   (alpha) ? 0 : mainImage->pixelColor(j,i).alphaQuantum()));
-//	    cout << mainImage->pixelColor(j,i).alphaQuantum() << endl;
+	    bool alpha = (mainImage->pixelColor(j+(x*edge[0]),i+(y*edge[2])).quantumRed() != mainImage->pixelColor(j,i).quantumRed()) ||
+	                 (mainImage->pixelColor(j-(x*edge[1]),i-(y*edge[3])).quantumBlue() != mainImage->pixelColor(j,i).quantumBlue()); //If there has been change in this pixel due to the rgb shift
+	    newImage->pixelColor(j,i,Color(mainImage->pixelColor(j+(x*edge[0]),i+(y*edge[2])).quantumRed(),
+					   mainImage->pixelColor(j,i).quantumGreen(),
+					   mainImage->pixelColor(j-(x*edge[1]),i-(y*edge[3])).quantumBlue(),
+					   (alpha) ? 0 : mainImage->pixelColor(j,i).quantumAlpha()));
+//	    cout << mainImage->pixelColor(j,i).quantumAlpha() << endl;
 
 	    delete edge;
 	}
@@ -162,11 +164,11 @@ bool* Glitch::imageToBits(Image* theImage)
 	{
 	    Color pixel = theImage->pixelColor(j,i);//Grab the pixel
 	    
-//	    cout << pixel.redQuantum() << endl;
-	    unsigned char bytes[4] = {(unsigned char)(conversionAmount*pixel.redQuantum()),    //These color values are actually being down graded from 
-				      (unsigned char)(conversionAmount*pixel.greenQuantum()),  //(assuming the default Quantum Depth of 16 has been used) 16 bits to 8. 
-				      (unsigned char)(conversionAmount*pixel.blueQuantum()),   //We cannot simply type cast the Quantums to an unsighed char since 
-				      (unsigned char)(conversionAmount*pixel.alphaQuantum())}; //they are far larger than 8 bits so we have to scale the number.
+//	    cout << pixel.quantumRed() << endl;
+	    unsigned char bytes[4] = {(unsigned char)(conversionAmount*pixel.quantumRed()),    //These color values are actually being down graded from 
+				      (unsigned char)(conversionAmount*pixel.quantumGreen()),  //(assuming the default Quantum Depth of 16 has been used) 16 bits to 8. 
+				      (unsigned char)(conversionAmount*pixel.quantumBlue()),   //We cannot simply type cast the Quantums to an unsighed char since 
+				      (unsigned char)(conversionAmount*pixel.quantumAlpha())}; //they are far larger than 8 bits so we have to scale the number.
 	    for (int h=0;h<4;h++)
 	    {
 		bitset<8> byte(bytes[h]);
@@ -220,13 +222,15 @@ void Glitch::splice(int type, char* filename)
 
     Image* secondImage = load(filename); //load the second image to be spliced into the main image
 
-    int width[2] = {mainImage->columns(),secondImage->columns()}; //grab the width of each image
-    int height[2] = {mainImage->rows(),secondImage->rows()}; //grab te height of each image
+    long unsigned int width[2] = {mainImage->columns(),secondImage->columns()}; //grab the width of each image
+    long unsigned int height[2] = {mainImage->rows(),secondImage->rows()}; //grab te height of each image
 
     bool* originalBits[2] = {imageToBits(mainImage),imageToBits(secondImage)};
 
-    int totalSize[2] = {(width[0]*height[0])*32,
-			(width[1]*height[1])*32};
+    long unsigned int totalSize[2] = {
+       (width[0]*height[0])*32,
+       (width[1]*height[1])*32
+    };
 
     bool largest = totalSize[0] < totalSize[1]; //Find the larger image, it doesn't matter if they are equal, only if one is smaller than the other.
 
@@ -267,8 +271,8 @@ void Glitch::splice(int type, char* filename)
     }
     else
     {
-	long widthDelta = abs(width[0] - width[1])*16;
-	long heightDelta = floor(abs(height[0] - height[1])/2);
+        unsigned long widthDelta = abs(long(width[0] - width[1]))*16;
+	unsigned long heightDelta = floor(abs(long(height[0] - height[1]))/2);
 	
 	for (int i=0;i<height[largest];i++)
 	{
